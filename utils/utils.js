@@ -14,7 +14,7 @@ module.exports.errUserNotFound = (userId, res) => errMessage(`Запрашива
 
 module.exports.errCardNotFound = (cardId, res) => errMessage(`Запрашиваемая карточа не найдена. Id: ${cardId}`, HTTP_NOT_FOUND, res);
 
-module.exports.errInvalidParameters = (res) => errMessage('Некорректные параметры запроса.', HTTP_BAD_REQUEST, res);
+module.exports.errInvalidParameters = (error, res) => errMessage('Некорректные параметры запроса.', HTTP_BAD_REQUEST, res);
 
 module.exports.isDbCastError = (error) => error.name === 'CastError';
 
