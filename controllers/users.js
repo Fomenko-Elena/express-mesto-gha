@@ -63,7 +63,10 @@ module.exports.updateCurrentUserInfo = (req, res) => {
     .findByIdAndUpdate(
       _id,
       { name, about },
-      { new: true },
+      {
+        new: true,
+        runValidators: true,
+      },
     )
     .then((user) => {
       if (user) {
@@ -85,7 +88,14 @@ module.exports.updateCurrentUserAvatar = (req, res) => {
   const { avatar } = req.body;
   const { _id } = req.user;
   User
-    .findByIdAndUpdate(_id, { avatar }, { new: true })
+    .findByIdAndUpdate(
+      _id,
+      { avatar },
+      {
+        new: true,
+        runValidators: true,
+      },
+    )
     .then((user) => {
       if (user) {
         res.send(user.toJSON(noVersionKeyOptions));

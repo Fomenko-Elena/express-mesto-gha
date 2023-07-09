@@ -2,6 +2,7 @@ const path = require('path');
 const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
+const { errPageNotFound } = require('./utils/utils');
 
 const { PORT = 3000 } = process.env;
 
@@ -26,6 +27,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/users', require('./routes/users'));
 app.use('/cards', require('./routes/cards'));
+
+app.use('*', (req, res) => errPageNotFound(res));
 
 app.listen(PORT, () => {
   // eslint-disable-next-line no-console

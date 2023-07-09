@@ -5,6 +5,7 @@ const {
   errCardNotFound,
   isValidationError,
   isDbCastError,
+  okMessage,
   noVersionKeyProjection,
   noVersionKeyOptions,
 } = require('../utils/utils');
@@ -46,7 +47,7 @@ module.exports.deleteCard = (req, res) => {
     .then((card) => {
       if (card) {
         if (card.owner.id === _id) {
-          return card.deleteOne().then(() => res.send());
+          return card.deleteOne().then(() => okMessage('Карточка удалена', res));
         }
         errInvalidParameters(`Карточка принадлежит другому пользователю. CardId:${cardId}, UserId:${_id}`, res);
       } else {
@@ -55,7 +56,7 @@ module.exports.deleteCard = (req, res) => {
       return card;
     })
     .catch((error) => {
-      if (isValidationError(error)) {
+      if (isValidationError(error) || isDbCastError(error)) {
         errInvalidParameters(error, res);
       } else {
         serverError(error, res);
