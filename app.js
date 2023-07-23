@@ -1,20 +1,21 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
-const { celebrate, Joi } = require('celebrate');
+const { celebrate, Joi, errors } = require('celebrate');
 const { errPageNotFound, JoiHelper } = require('./utils/utils');
 const {
   addUser,
   login,
 } = require('./controllers/users');
 const auth = require('./middlewares/auth');
-const errors = require('./middlewares/errors');
+const otherErrors = require('./middlewares/errors');
 
 const { PORT = 3000 } = process.env;
 
 const app = express();
 
-mongoose.connect('mongodb://localhost:27017/mestodb', {
+//mongoose.connect('mongodb://localhost:27017/mestodb', {
+mongoose.connect('mongodb://127.0.0.1:27017/mestodb', {
   useNewUrlParser: true,
 });
 
@@ -53,7 +54,8 @@ app.use('/cards', require('./routes/cards'));
 
 app.use('*', (req, res) => errPageNotFound(res));
 
-app.use(errors);
+app.use(errors());
+app.use(otherErrors);
 
 app.listen(PORT, () => {
   // eslint-disable-next-line no-console

@@ -1,4 +1,3 @@
-const { isCelebrateError } = require('celebrate');
 const {
   errInvalidParameters,
   errNotFound,
@@ -19,8 +18,7 @@ module.exports = (err, req, res, next) => {
   // eslint-disable-next-line no-console
   console.log(err);
 
-  if (isCelebrateError(err)
-    || isDbCastError(err)
+  if (isDbCastError(err)
     || isValidationError(err)
     || err instanceof UnauthorizedDeleteCardError) {
     errInvalidParameters(res);
