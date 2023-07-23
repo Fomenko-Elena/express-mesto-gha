@@ -55,7 +55,10 @@ module.exports.addUser = (req, res, next) => {
       name, about, avatar, email, password: hash,
     }))
     .then((user) => {
-      res.send(user.toJSON(noVersionKeyOptions));
+      res.send(user.toJSON({
+        useProjection: true,
+        ...noVersionKeyOptions,
+      }));
     })
     .catch((error) => {
       if (isDuplicateError(error)) {
@@ -120,7 +123,9 @@ module.exports.login = (req, res, next) => {
         SECRET_KEY,
         JWT_OPTIONS,
       );
-      res.cookie('token', token, COOKIE_OPTIONS).send();
+      res.cookie('token', token, COOKIE_OPTIONS).send({
+        token,
+      });
     })
     .catch(next);
 };
