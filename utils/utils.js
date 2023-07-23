@@ -6,6 +6,7 @@ const sendMessage = (message, status, res) => res.status(status).send({ message 
 const HTTP_OK = 200;
 const HTTP_UNAUTHORIZED = 401;
 const HTTP_NOT_FOUND = 404;
+const HTTP_FOBIDDEN = 403;
 const HTTP_CONFLICT = 409;
 const HTTP_SERVER_ERROR = 500;
 const HTTP_BAD_REQUEST = 400;
@@ -24,11 +25,13 @@ module.exports.errUnauthorized = (res) => sendMessage('Необходима ав
 
 module.exports.errConflict = (message, res) => sendMessage(message, HTTP_CONFLICT, res);
 
+module.exports.errForbidden = (message, res) => sendMessage(message, HTTP_FOBIDDEN, res);
+
 module.exports.noVersionKeyProjection = '-__v';
 
 module.exports.noVersionKeyOptions = { versionKey: false };
 
-module.exports.URL_REGEX = /^(http(s):\/\/)?(\.www)?([a-zA-Z0-9\-._~:/?#[\]@!$&'()*+,;=]+)+$/;
+module.exports.URL_REGEX = /^(https?:\/\/)?([a-zA-Z0-9][a-zA-Z0-9-_]{0,61}[a-zA-Z0-9]{0,1}\.([a-zA-Z]{1,6}|[a-zA-Z0-9-]{1,30}\.[a-zA-Z]{2,3}))([a-zA-Z0-9\-._~:/?#[\]@!$&'()*+,;=]+)+$/;
 
 module.exports.JoiHelper = {
   id: () => Joi.string().pattern(/^[0-9a-fA-F]{24}$/),

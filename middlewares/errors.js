@@ -4,6 +4,7 @@ const {
   errConflict,
   serverError,
   errUnauthorized,
+  errForbidden,
 } = require('../utils/utils');
 const {
   UserNotFoundError,
@@ -21,8 +22,7 @@ module.exports = (err, req, res, next) => {
   console.log(err);
 
   if (isDbCastError(err)
-    || isValidationError(err)
-    || err instanceof UnauthorizedDeleteCardError) {
+    || isValidationError(err)) {
     errInvalidParameters(res);
   } else if (err instanceof UserNotFoundError || err instanceof CardNotFoundError) {
     errNotFound(err.message, res);
@@ -30,6 +30,8 @@ module.exports = (err, req, res, next) => {
     errConflict(err.message, res);
   } else if (err instanceof UnauthorizedError) {
     errUnauthorized(res);
+  } else if (err instanceof UnauthorizedDeleteCardError) {
+    errForbidden(err.message, res);
   } else {
     serverError(res);
   }
