@@ -8,7 +8,7 @@ module.exports = (req, res, next) => {
   const { authorization } = req.headers;
 
   if (!authorization || !authorization.startsWith(BEARER_PREFIX)) {
-    return errUnauthorized(null, res);
+    return errUnauthorized(res);
   }
 
   const token = authorization.substring(BEARER_PREFIX.length);
@@ -17,7 +17,7 @@ module.exports = (req, res, next) => {
   try {
     userData = jwt.verify(token, SECRET_KEY);
   } catch (err) {
-    return errUnauthorized(err, res);
+    return errUnauthorized(res);
   }
 
   req.user = userData;
