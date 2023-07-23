@@ -14,7 +14,8 @@ const {
   isValidationError,
 } = require('../utils/errors');
 
-module.exports = (err, req, res) => {
+// eslint-disable-next-line no-unused-vars
+module.exports = (err, req, res, next) => {
   // eslint-disable-next-line no-console
   console.log(err);
 
@@ -22,7 +23,7 @@ module.exports = (err, req, res) => {
     || isDbCastError(err)
     || isValidationError(err)
     || err instanceof UnauthorizedDeleteCardError) {
-    errInvalidParameters(err, res);
+    errInvalidParameters(res);
   } if (err instanceof UserNotFoundError || err instanceof CardNotFoundError) {
     errNotFound(err.message, res);
   } if (err instanceof UserDuplicateError) {
