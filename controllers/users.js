@@ -1,62 +1,72 @@
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 const {
-  errUserNotFound,
-  serverError,
-  errInvalidParameters,
-  isDbCastError,
-  isValidationError,
   noVersionKeyProjection,
   noVersionKeyOptions,
 } = require('../utils/utils');
+const {
+  PASSWORD_SALT_LENGTH,
+  SECRET_KEY,
+  JWT_OPTIONS,
+  COOKIE_OPTIONS,
+} = require('../utils/constants');
+const {
+  UserNotFoundError,
+  UserDuplicateError,
+  UnauthorizedError,
+  isDuplicateError,
+} = require('../utils/errors');
 
-module.exports.getUsers = (req, res) => {
+module.exports.getUsers = (req, res, next) => {
   User
     .find({}, noVersionKeyProjection)
     .then((users) => res.send(users))
-    .catch((error) => serverError(error, res));
+    .catch(next);
 };
 
-const handleGetUser = (userId, res) => {
+function chekUserNotNull(user, userId) {
+  if (!user) {
+    throw new UserNotFoundError(`Запрашиваемый пользователь не найден. Id: ${userId}`);
+  }
+}
+
+const handleGetUser = (userId, res, next) => {
   User
     .findById(userId, noVersionKeyProjection)
     .then((user) => {
-      if (user) {
-        res.send(user);
-      } else {
-        errUserNotFound(userId, res);
-      }
+      chekUserNotNull(user, userId);
+      res.send(user);
     })
-    .catch((error) => {
-      if (isDbCastError(error)) {
-        errInvalidParameters(error, res);
-      } else {
-        serverError(error, res);
-      }
-    });
+    .catch(next);
 };
 
-module.exports.getUser = (req, res) => handleGetUser(req.params.id, res);
+module.exports.getUser = (req, res, next) => handleGetUser(req.params.id, res, next);
+module.exports.getCurrentUserInfo = (req, res, next) => handleGetUser(req.user._id, res, next);
 
-module.exports.addUser = (req, res) => {
-  const { name, about, avatar } = req.body;
+module.exports.addUser = (req, res, next) => {
+  const {
+    name, about, avatar, email, password,
+  } = req.body;
 
-  User
-    .create({ name, about, avatar })
+  bcrypt
+    .hash(password, PASSWORD_SALT_LENGTH)
+    .then((hash) => User.create({
+      name, about, avatar, email, password: hash,
+    }))
     .then((user) => {
       res.send(user.toJSON(noVersionKeyOptions));
     })
     .catch((error) => {
-      if (isValidationError(error)) {
-        errInvalidParameters(error, res);
+      if (isDuplicateError(error)) {
+        next(new UserDuplicateError('Пользователь с таким email уже существует'));
       } else {
-        serverError(error, res);
+        next(error);
       }
     });
 };
 
-module.exports.getCurrentUserInfo = (req, res) => handleGetUser(req.user._id, res);
-
-module.exports.updateCurrentUserInfo = (req, res) => {
+module.exports.updateCurrentUserInfo = (req, res, next) => {
   const { name, about } = req.body;
   const { _id } = req.user;
   User
@@ -69,22 +79,13 @@ module.exports.updateCurrentUserInfo = (req, res) => {
       },
     )
     .then((user) => {
-      if (user) {
-        res.send(user.toJSON(noVersionKeyOptions));
-      } else {
-        errUserNotFound(_id, res);
-      }
+      chekUserNotNull(user, _id);
+      res.send(user.toJSON(noVersionKeyOptions));
     })
-    .catch((error) => {
-      if (isDbCastError(error) || isValidationError(error)) {
-        errInvalidParameters(error, res);
-      } else {
-        serverError(error, res);
-      }
-    });
+    .catch(next);
 };
 
-module.exports.updateCurrentUserAvatar = (req, res) => {
+module.exports.updateCurrentUserAvatar = (req, res, next) => {
   const { avatar } = req.body;
   const { _id } = req.user;
   User
@@ -97,17 +98,29 @@ module.exports.updateCurrentUserAvatar = (req, res) => {
       },
     )
     .then((user) => {
-      if (user) {
-        res.send(user.toJSON(noVersionKeyOptions));
-      } else {
-        errUserNotFound(_id, res);
-      }
+      chekUserNotNull(user, _id);
+      res.send(user.toJSON(noVersionKeyOptions));
     })
-    .catch((error) => {
-      if (isDbCastError(error) || isValidationError(error)) {
-        errInvalidParameters(error, res);
-      } else {
-        serverError(error, res);
+    .catch(next);
+};
+
+module.exports.login = (req, res, next) => {
+  const { email, password } = req.body;
+
+  return User.findUserByCredentials(email, password)
+    .then((user) => {
+      if (!user) {
+        throw new UnauthorizedError('Запрашиваемый пользователь не найден.');
       }
-    });
+
+      const token = jwt.sign(
+        {
+          _id: user._id,
+        },
+        SECRET_KEY,
+        JWT_OPTIONS,
+      );
+      res.cookie('token', token, COOKIE_OPTIONS).send();
+    })
+    .catch(next);
 };

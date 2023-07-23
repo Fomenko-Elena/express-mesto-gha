@@ -1,25 +1,21 @@
 const Card = require('../models/card');
+const { CardNotFoundError, UnauthorizedDeleteCardError } = require('../utils/errors');
 const {
-  serverError,
-  errInvalidParameters,
-  errCardNotFound,
-  isValidationError,
-  isDbCastError,
   okMessage,
   noVersionKeyProjection,
   noVersionKeyOptions,
 } = require('../utils/utils');
 
-module.exports.getCards = (req, res) => {
+module.exports.getCards = (req, res, next) => {
   Card
     .find({}, noVersionKeyProjection)
     .populate(['owner', 'likes'])
     .sort('-createdAt')
     .then((cards) => res.send(cards))
-    .catch((error) => serverError(error, res));
+    .catch(next);
 };
 
-module.exports.addCard = (req, res) => {
+module.exports.addCard = (req, res, next) => {
   const { name, link } = req.body;
   const { _id } = req.user;
 
@@ -28,16 +24,22 @@ module.exports.addCard = (req, res) => {
     .then((card) => card
       .populate(['owner', 'likes'])
       .then((populatedCard) => res.send(populatedCard.toJSON(noVersionKeyOptions))))
-    .catch((error) => {
-      if (isValidationError(error)) {
-        errInvalidParameters(error, res);
-      } else {
-        serverError(error, res);
-      }
-    });
+    .catch(next);
 };
 
-module.exports.deleteCard = (req, res) => {
+function checkCardNotNull(card, cardId) {
+  if (!card) {
+    throw new CardNotFoundError(`Запрашиваемая карта не найдена. CardId: ${cardId}`);
+  }
+}
+
+function checkCardOwner(card, userId) {
+  if (card.owner.id !== userId) {
+    throw new UnauthorizedDeleteCardError(`Карточка принадлежит другому пользователю. CardId:${card._id}.`);
+  }
+}
+
+module.exports.deleteCard = (req, res, next) => {
   const { _id } = req.user;
   const { cardId } = req.params;
 
@@ -45,26 +47,14 @@ module.exports.deleteCard = (req, res) => {
     .findById(cardId)
     .populate('owner')
     .then((card) => {
-      if (card) {
-        if (card.owner.id === _id) {
-          return card.deleteOne().then(() => okMessage('Карточка удалена', res));
-        }
-        errInvalidParameters(`Карточка принадлежит другому пользователю. CardId:${cardId}, UserId:${_id}`, res);
-      } else {
-        errCardNotFound(cardId, res);
-      }
-      return card;
+      checkCardNotNull(card, cardId);
+      checkCardOwner(card, _id);
+      return card.deleteOne().then(() => okMessage('Карточка удалена', res));
     })
-    .catch((error) => {
-      if (isValidationError(error) || isDbCastError(error)) {
-        errInvalidParameters(error, res);
-      } else {
-        serverError(error, res);
-      }
-    });
+    .catch(next);
 };
 
-module.exports.likeCard = (req, res) => {
+module.exports.likeCard = (req, res, next) => {
   const { _id } = req.user;
   const { cardId } = req.params;
 
@@ -75,24 +65,15 @@ module.exports.likeCard = (req, res) => {
       { new: true },
     )
     .then((card) => {
-      if (card) {
-        card
-          .populate(['owner', 'likes'])
-          .then((populatedCard) => res.send(populatedCard.toJSON(noVersionKeyOptions)));
-      } else {
-        errCardNotFound(cardId, res);
-      }
+      checkCardNotNull(card, cardId);
+      return card
+        .populate(['owner', 'likes'])
+        .then((populatedCard) => res.send(populatedCard.toJSON(noVersionKeyOptions)));
     })
-    .catch((error) => {
-      if (isDbCastError(error)) {
-        errInvalidParameters(error, res);
-      } else {
-        serverError(error, res);
-      }
-    });
+    .catch(next);
 };
 
-module.exports.dislikeCard = (req, res) => {
+module.exports.dislikeCard = (req, res, next) => {
   const { _id } = req.user;
   const { cardId } = req.params;
 
@@ -103,19 +84,10 @@ module.exports.dislikeCard = (req, res) => {
       { new: true },
     )
     .then((card) => {
-      if (card) {
-        card
-          .populate(['owner', 'likes'])
-          .then((populatedCard) => res.send(populatedCard.toJSON(noVersionKeyOptions)));
-      } else {
-        errCardNotFound(cardId, res);
-      }
+      checkCardNotNull(card, cardId);
+      return card
+        .populate(['owner', 'likes'])
+        .then((populatedCard) => res.send(populatedCard.toJSON(noVersionKeyOptions)));
     })
-    .catch((error) => {
-      if (isDbCastError(error)) {
-        errInvalidParameters(error, res);
-      } else {
-        serverError(error, res);
-      }
-    });
+    .catch(next);
 };

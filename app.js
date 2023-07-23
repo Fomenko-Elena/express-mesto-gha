@@ -1,34 +1,60 @@
-const path = require('path');
 const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
-const { errPageNotFound } = require('./utils/utils');
+const { celebrate, Joi } = require('celebrate');
+const { errPageNotFound, JoiHelper } = require('./utils/utils');
+const {
+  addUser,
+  login,
+} = require('./controllers/users');
+const auth = require('./middlewares/auth');
+const errors = require('./middlewares/errors');
 
 const { PORT = 3000 } = process.env;
 
 const app = express();
 
-mongoose.connect('mongodb://localhost:27017/mestodb', {
+//mongoose.connect('mongodb://localhost:27017/mestodb', {
+mongoose.connect('mongodb://127.0.0.1:27017/mestodb', {
   useNewUrlParser: true,
 });
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-app.use((req, res, next) => {
-  req.user = {
-    _id: '64aadc9f27f7bd4318d1fbcb',
-  };
+app.post(
+  '/signin',
+  celebrate({
+    body: Joi.object().keys({
+      email: JoiHelper.email().required(),
+      password: JoiHelper.userPassword().required(),
+    }),
+  }),
+  login,
+);
 
-  next();
-});
+app.post(
+  '/signup',
+  celebrate({
+    body: Joi.object().keys({
+      name: JoiHelper.userName(),
+      about: JoiHelper.userAbout(),
+      avatar: JoiHelper.url(),
+      email: JoiHelper.email().required(),
+      password: JoiHelper.userPassword().required(),
+    }),
+  }),
+  addUser,
+);
 
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(auth);
 
 app.use('/users', require('./routes/users'));
 app.use('/cards', require('./routes/cards'));
 
 app.use('*', (req, res) => errPageNotFound(res));
+
+app.use(errors);
 
 app.listen(PORT, () => {
   // eslint-disable-next-line no-console
