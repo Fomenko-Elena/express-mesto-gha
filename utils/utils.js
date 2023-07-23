@@ -41,6 +41,6 @@ module.exports.JoiHelper = {
     if (!validator.isEmail(value)) {
       return helper.message('Неправильный email');
     }
-    return true;
+    return value;
   }),
 };
