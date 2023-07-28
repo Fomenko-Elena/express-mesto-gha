@@ -1,17 +1,20 @@
 const jwt = require('jsonwebtoken');
-const { SECRET_KEY } = require('../utils/constants');
+const { SECRET_KEY, COOKIE_NAME } = require('../utils/constants');
 const { UnauthorizedError } = require('../utils/errors');
 
 const BEARER_PREFIX = 'Bearer ';
 
 module.exports = (req, res, next) => {
-  const { authorization } = req.headers;
+  let token = req.cookies[COOKIE_NAME];
+  if (!token) {
+    const { authorization } = req.headers;
 
-  if (!authorization || !authorization.startsWith(BEARER_PREFIX)) {
-    return next(new UnauthorizedError());
+    if (!authorization || !authorization.startsWith(BEARER_PREFIX)) {
+      return next(new UnauthorizedError());
+    }
+
+    token = authorization.substring(BEARER_PREFIX.length);
   }
-
-  const token = authorization.substring(BEARER_PREFIX.length);
 
   let userData;
   try {

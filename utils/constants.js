@@ -8,6 +8,7 @@ module.exports.SECRET_KEY = 'dShHhXIAQkAt7Oe7vZb8lV7buPeIJz1W';
 module.exports.JWT_OPTIONS = {
   expiresIn: '7d',
 };
+module.exports.COOKIE_NAME = 'token';
 module.exports.COOKIE_OPTIONS = {
   httpOnly: true,
   sameSite: 'strict',
