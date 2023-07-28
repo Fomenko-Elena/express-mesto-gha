@@ -1,5 +1,6 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { MongoServerError } = require('mongodb');
 const User = require('../models/user');
 const {
   noVersionKeyProjection,
@@ -12,10 +13,8 @@ const {
   COOKIE_OPTIONS,
 } = require('../utils/constants');
 const {
-  UserNotFoundError,
-  UserDuplicateError,
-  UnauthorizedError,
-  isDuplicateError,
+  NotFoundError,
+  DuplicateError,
 } = require('../utils/errors');
 
 module.exports.getUsers = (req, res, next) => {
@@ -27,7 +26,7 @@ module.exports.getUsers = (req, res, next) => {
 
 function chekUserNotNull(user, userId) {
   if (!user) {
-    throw new UserNotFoundError(`Запрашиваемый пользователь не найден. Id: ${userId}`);
+    throw new NotFoundError(`Запрашиваемый пользователь не найден. Id: ${userId}`);
   }
 }
 
@@ -61,8 +60,8 @@ module.exports.addUser = (req, res, next) => {
       }));
     })
     .catch((error) => {
-      if (isDuplicateError(error)) {
-        next(new UserDuplicateError('Пользователь с таким email уже существует'));
+      if (error instanceof MongoServerError && error.code === 11000) {
+        next(new DuplicateError('Пользователь с таким email уже существует'));
       } else {
         next(error);
       }
@@ -112,10 +111,6 @@ module.exports.login = (req, res, next) => {
 
   return User.findUserByCredentials(email, password)
     .then((user) => {
-      if (!user) {
-        throw new UnauthorizedError('Запрашиваемый пользователь не найден.');
-      }
-
       const token = jwt.sign(
         {
           _id: user._id,
@@ -123,9 +118,7 @@ module.exports.login = (req, res, next) => {
         SECRET_KEY,
         JWT_OPTIONS,
       );
-      res.cookie('token', token, COOKIE_OPTIONS).send({
-        token,
-      });
+      res.cookie('token', token, COOKIE_OPTIONS).send();
     })
     .catch(next);
 };

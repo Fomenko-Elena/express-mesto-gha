@@ -1,31 +1,20 @@
 /* eslint-disable max-classes-per-file */
-class UserNotFoundError extends Error {
+class NotFoundError extends Error {
 }
 
-class UserDuplicateError extends Error {
+class DuplicateError extends Error {
 }
 
 class UnauthorizedError extends Error {
 }
 
-class CardNotFoundError extends Error {
+class ForbiddenError extends Error {
 }
 
-class UnauthorizedDeleteCardError extends Error {
-}
+module.exports.NotFoundError = NotFoundError;
 
-module.exports.UserNotFoundError = UserNotFoundError;
-
-module.exports.UserDuplicateError = UserDuplicateError;
+module.exports.DuplicateError = DuplicateError;
 
 module.exports.UnauthorizedError = UnauthorizedError;
 
-module.exports.CardNotFoundError = CardNotFoundError;
-
-module.exports.UnauthorizedDeleteCardError = UnauthorizedDeleteCardError;
-
-module.exports.isDbCastError = (error) => error.name === 'CastError';
-
-module.exports.isValidationError = (error) => error.name === 'ValidationError';
-
-module.exports.isDuplicateError = (error) => error.name === 'MongoServerError' && error.code === 11000;
+module.exports.ForbiddenError = ForbiddenError;

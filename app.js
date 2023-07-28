@@ -2,13 +2,14 @@ const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const { celebrate, Joi, errors } = require('celebrate');
-const { errPageNotFound, JoiHelper } = require('./utils/utils');
+const { JoiHelper } = require('./utils/utils');
 const {
   addUser,
   login,
 } = require('./controllers/users');
 const auth = require('./middlewares/auth');
 const otherErrors = require('./middlewares/errors');
+const { NotFoundError } = require('./utils/errors');
 
 const { PORT = 3000 } = process.env;
 
@@ -51,7 +52,7 @@ app.use(auth);
 app.use('/users', require('./routes/users'));
 app.use('/cards', require('./routes/cards'));
 
-app.use('*', (req, res) => errPageNotFound(res));
+app.use('*', (req, res, next) => next(new NotFoundError('Страница по указанному маршруту не найдена')));
 
 app.use(errors());
 app.use(otherErrors);

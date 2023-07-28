@@ -12,21 +12,18 @@ const { UnauthorizedError } = require('../utils/errors');
 const userSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: true,
     minlength: 2,
     maxlength: 30,
     default: DEFAULT_USER_NAME,
   },
   about: {
     type: String,
-    required: true,
     minlength: 2,
     maxlength: 30,
     default: DEFAULT_USER_ABOUT,
   },
   avatar: {
     type: String,
-    required: true,
     default: DEFAULT_USER_AVATAR,
     validate: {
       validator: (value) => URL_REGEX.test(value),

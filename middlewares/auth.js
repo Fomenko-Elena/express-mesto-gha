@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
-const { errUnauthorized } = require('../utils/utils');
 const { SECRET_KEY } = require('../utils/constants');
+const { UnauthorizedError } = require('../utils/errors');
 
 const BEARER_PREFIX = 'Bearer ';
 
@@ -8,7 +8,7 @@ module.exports = (req, res, next) => {
   const { authorization } = req.headers;
 
   if (!authorization || !authorization.startsWith(BEARER_PREFIX)) {
-    return errUnauthorized(res);
+    return next(new UnauthorizedError());
   }
 
   const token = authorization.substring(BEARER_PREFIX.length);
@@ -17,7 +17,7 @@ module.exports = (req, res, next) => {
   try {
     userData = jwt.verify(token, SECRET_KEY);
   } catch (err) {
-    return errUnauthorized(res);
+    return next(new UnauthorizedError());
   }
 
   req.user = userData;

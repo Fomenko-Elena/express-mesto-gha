@@ -1,10 +1,11 @@
 const Card = require('../models/card');
-const { CardNotFoundError, UnauthorizedDeleteCardError } = require('../utils/errors');
+const { NotFoundError, ForbiddenError } = require('../utils/errors');
 const {
-  okMessage,
   noVersionKeyProjection,
   noVersionKeyOptions,
 } = require('../utils/utils');
+
+const HTTP_OK = 200;
 
 module.exports.getCards = (req, res, next) => {
   Card
@@ -29,13 +30,13 @@ module.exports.addCard = (req, res, next) => {
 
 function checkCardNotNull(card, cardId) {
   if (!card) {
-    throw new CardNotFoundError(`Запрашиваемая карта не найдена. CardId: ${cardId}`);
+    throw new NotFoundError(`Запрашиваемая карта не найдена. CardId: ${cardId}`);
   }
 }
 
 function checkCardOwner(card, userId) {
   if (card.owner.id !== userId) {
-    throw new UnauthorizedDeleteCardError(`Карточка принадлежит другому пользователю. CardId:${card._id}.`);
+    throw new ForbiddenError(`Карточка принадлежит другому пользователю. CardId:${card._id}.`);
   }
 }
 
@@ -49,7 +50,7 @@ module.exports.deleteCard = (req, res, next) => {
     .then((card) => {
       checkCardNotNull(card, cardId);
       checkCardOwner(card, _id);
-      return card.deleteOne().then(() => okMessage('Карточка удалена', res));
+      return card.deleteOne().then(() => res.status(HTTP_OK).send({ message: 'Карточка удалена' }));
     })
     .catch(next);
 };
