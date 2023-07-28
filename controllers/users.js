@@ -118,7 +118,7 @@ module.exports.login = (req, res, next) => {
         SECRET_KEY,
         JWT_OPTIONS,
       );
-      res.cookie('token', token, COOKIE_OPTIONS).send({ message: 'Авторизация успешна' });
+      res.cookie('jwt', token, COOKIE_OPTIONS).send({ message: 'Авторизация успешна' });
     })
     .catch(next);
 };

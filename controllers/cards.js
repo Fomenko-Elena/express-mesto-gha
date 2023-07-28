@@ -5,8 +5,6 @@ const {
   noVersionKeyOptions,
 } = require('../utils/utils');
 
-const HTTP_OK = 200;
-
 module.exports.getCards = (req, res, next) => {
   Card
     .find({}, noVersionKeyProjection)
@@ -50,7 +48,7 @@ module.exports.deleteCard = (req, res, next) => {
     .then((card) => {
       checkCardNotNull(card, cardId);
       checkCardOwner(card, _id);
-      return card.deleteOne().then(() => res.status(HTTP_OK).send({ message: 'Карточка удалена' }));
+      return card.deleteOne().then(() => res.send({ message: 'Карточка удалена' }));
     })
     .catch(next);
 };
